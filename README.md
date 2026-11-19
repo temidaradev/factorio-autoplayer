@@ -16,6 +16,18 @@ swift build -c release
 
 The diagnostic reports whether Factorio is running and whether the process has Screen Recording and Accessibility access. The program checks these permissions without requesting or modifying them. Screen Recording is needed for screenshots. Accessibility is needed to deliver foreground input.
 
+## Play with two agents
+
+Launch Factorio and open the intended save. Then start a Codex CLI session with the project launcher:
+
+```sh
+./play-team "Build and launch the first working Space Age platform"
+```
+
+The planner turns verified game state into one milestone at a time. The player controls Factorio and returns visible proof, inventory changes and any blockers. The main session relays their messages. The launcher supplies the Factorio connection for that session. It uses the two [project-scoped Codex agent definitions](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agents).
+
+## Connect another MCP session
+
 In your MCP client's local configuration, use the absolute path of the built executable. For a Codex CLI installation, from this repository run:
 
 ```sh

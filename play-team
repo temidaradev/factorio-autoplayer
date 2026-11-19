@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -eq 0 ]; then
+    printf '%s\n' 'Usage: ./play-team "Build and launch the first working space platform"' >&2
+    exit 2
+fi
+
+cd "$(dirname "$0")"
+if [ ! -x .build/release/factorio-player ]; then
+    printf '%s\n' 'Build the player first with swift build -c release.' >&2
+    exit 1
+fi
+
+instructions='Coordinate exactly two custom agents, factorio_planner and factorio_player.
+The planner selects the next milestone and passes it to the player through you.
+Start by asking the player for a read-only game report and give that report to the planner.
+Only the player may interact with Factorio. You relay tasks and verified results.
+Keep the same two agents across milestones. Forward each completion or blocker back to
+the planner and continue until the operator objective is visibly achieved or the player
+reports a blocker that needs the operator. Follow docs/playbook.md and preserve achievements.'
+
+exec codex \
+    -c "mcp_servers.factorio_player.command=$PWD/.build/release/factorio-player" \
+    -c 'mcp_servers.factorio_player.args=["mcp","--allow-input"]' \
+    "$instructions
+
+Operator objective:
+$*"

@@ -161,7 +161,11 @@ final class FactorioDesktop {
 
     private func gameWindow() -> Window? {
         guard let pid = application?.processIdentifier else { return nil }
-        for item in windows {
+        return gameWindow(for: pid, in: windows)
+    }
+
+    private func gameWindow(for pid: pid_t, in visibleWindows: [[String: Any]]) -> Window? {
+        for item in visibleWindows {
             guard item[kCGWindowOwnerPID as String] as? Int32 == pid,
                   item[kCGWindowLayer as String] as? Int == 0,
                   let id = item[kCGWindowNumber as String] as? CGWindowID,
@@ -179,12 +183,13 @@ final class FactorioDesktop {
     }
 
     private func checkTarget(_ window: Window, at point: CGPoint? = nil) throws {
+        let visibleWindows = windows
         guard NSWorkspace.shared.frontmostApplication?.processIdentifier == window.pid,
-              gameWindow() == window else {
+              gameWindow(for: window.pid, in: visibleWindows) == window else {
             throw PlayerError("Factorio lost focus or its window changed. Observe again before resuming.")
         }
         if let point {
-            let hit = windows.first {
+            let hit = visibleWindows.first {
                 ($0[kCGWindowAlpha as String] as? Double ?? 1) > 0.01
                     && ($0[kCGWindowLayer as String] as? Int ?? -1) >= 0
                     && bounds(of: $0)?.contains(point) == true
@@ -256,12 +261,12 @@ final class FactorioDesktop {
     }
 
     private func hold(_ milliseconds: Int, window: Window, at point: CGPoint? = nil) throws {
-        var remaining = milliseconds
+        let deadline = ProcessInfo.processInfo.systemUptime + Double(milliseconds) / 1_000
+        var remaining = deadline - ProcessInfo.processInfo.systemUptime
         while remaining > 0 {
-            let interval = min(remaining, 50)
-            Thread.sleep(forTimeInterval: Double(interval) / 1_000)
+            Thread.sleep(forTimeInterval: min(remaining, 0.05))
             try checkTarget(window, at: point)
-            remaining -= interval
+            remaining = deadline - ProcessInfo.processInfo.systemUptime
         }
     }
 

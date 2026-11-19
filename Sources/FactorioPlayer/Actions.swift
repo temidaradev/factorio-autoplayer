@@ -110,7 +110,7 @@ struct PreparedAction {
 
     static let maxActions = 12
     static let maxBatchMs = 4_000
-    static let maxActionMs = 1_500
+    static let maxActionMs = 3_300
     static let maxTextLength = 64
 
     static func prepare(_ requests: [ActionRequest], geometry: FrameGeometry) throws -> [Self] {

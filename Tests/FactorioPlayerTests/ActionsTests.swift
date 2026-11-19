@@ -25,12 +25,12 @@ final class ActionsTests: XCTestCase {
     func testPreparesRightMouseHoldAndDiagonalMovement() throws {
         let actions = try prepare("""
         [
-          {"type":"click","at":{"x":800,"y":600},"button":"right","durationMs":900},
+          {"type":"click","at":{"x":800,"y":600},"button":"right","durationMs":2250},
           {"type":"key","key":"w+d","durationMs":500}
         ]
         """)
         if case .click(_, .right) = actions[0].operation {
-            XCTAssertEqual(actions[0].durationMs, 900)
+            XCTAssertEqual(actions[0].durationMs, 2250)
         } else {
             XCTFail("Expected a right mouse hold")
         }
