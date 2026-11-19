@@ -1,0 +1,67 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")"
+
+name=factorio-autoplayer-background
+image=factorio-autoplayer-background:local
+profile="$PWD/.factorio-background"
+label=io.factorio-autoplayer.background
+
+owned_container() {
+    actual=$(docker inspect --format '{{index .Config.Labels "io.factorio-autoplayer.background"}}' "$name")
+    [ "$actual" = "1" ] || { echo "Container $name is not owned by this project." >&2; exit 1; }
+}
+
+case "${1:-}" in
+    start)
+        if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+            echo "Usage: ./background-game start /path/to/extracted-linux-factorio [existing-save.zip]" >&2
+            exit 2
+        fi
+        install=$(cd "$2" && pwd -P)
+        if ! [ -x "$install/bin/arm64/factorio" ] && ! [ -x "$install/bin/aarch64/factorio" ] &&
+           ! [ -x "$install/bin/x64/factorio" ]; then
+            echo "Use the extracted full Linux client directory containing bin and data." >&2
+            exit 1
+        fi
+        seed=""
+        if [ "$#" -eq 3 ]; then
+            seed_dir=$(cd "$(dirname "$3")" && pwd -P)
+            seed="$seed_dir/$(basename "$3")"
+            [ -f "$seed" ] || { echo "Save file was not found." >&2; exit 1; }
+            [ ! -e "$profile/saves/start.zip" ] || {
+                echo "A previous import exists. Start without a seed and select the save in Factorio." >&2
+                exit 1
+            }
+        fi
+        mkdir -p "$profile"
+        docker build --tag "$image" background
+        set -- --detach --init --rm --network none --name "$name" --label "$label=1" \
+            --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges \
+            --mount "type=bind,source=$install,target=/game,readonly" \
+            --mount "type=bind,source=$profile,target=/profile"
+        if [ -n "$seed" ]; then
+            set -- "$@" --mount "type=bind,source=$seed,target=/seed/start.zip,readonly"
+        fi
+        docker run "$@" "$image"
+        printf '%s\n' "Private Factorio display started. Use ./background-game logs to check startup."
+        ;;
+    mcp)
+        shift
+        owned_container
+        exec docker exec -i "$name" python3 /opt/player/mcp.py "$@"
+        ;;
+    logs)
+        owned_container
+        exec docker logs --tail 60 "$name"
+        ;;
+    stop)
+        owned_container
+        exec docker stop --time 15 "$name"
+        ;;
+    *)
+        printf '%s\n' 'Usage: ./background-game start /path/to/linux-factorio [save.zip]' \
+            '       ./background-game logs | stop | mcp [--allow-input]' >&2
+        exit 2
+        ;;
+esac

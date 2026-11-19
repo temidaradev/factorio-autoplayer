@@ -26,6 +26,19 @@ Launch Factorio and open the intended save. Then start a Codex CLI session with 
 
 The planner turns verified game state into one milestone at a time. The player controls Factorio and returns visible proof, inventory changes and any blockers. The main session relays their messages. The launcher supplies the Factorio connection for that session. It uses the two [project-scoped Codex agent definitions](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agents).
 
+## Play in the background on a Mac
+
+Start Docker Desktop and extract the licensed **full Linux Space Age client** from Factorio into its own directory. Use Linux arm64 on Apple silicon or Linux x64 on an Intel Mac. For an existing save, use a client version that can load it. [Factorio downloads](https://factorio.com/download)
+
+```sh
+./background-game start "/path/to/extracted/factorio" "/path/to/Nauvis.zip"
+./play-team --background "Continue Nauvis until the first working space platform"
+```
+
+Omit the save argument to start at the game menu or resume a save already in the background profile. Imported saves are copied to `.factorio-background/saves/`. The game install and import are mounted read-only. The background game has its own Linux display, pointer, and keyboard, so switching Mac apps has no effect on its controls. Save through the in-game menu before running `./background-game stop`. Use `./background-game logs` if startup fails.
+
+This runs the standalone Linux client. It uses normal game input and leaves save eligibility intact. Steam unlocks aren't verified in standalone mode. The background profile keeps its own config and saves, and the native Mac game can remain closed. [Factorio achievement rules](https://wiki.factorio.com/Achievements)
+
 ## Connect another MCP session
 
 In your MCP client's local configuration, use the absolute path of the built executable. For a Codex CLI installation, from this repository run:

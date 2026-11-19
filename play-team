@@ -1,13 +1,22 @@
 #!/bin/sh
 set -eu
 
+background=false
+if [ "${1:-}" = "--background" ]; then
+    background=true
+    shift
+fi
 if [ "$#" -eq 0 ]; then
-    printf '%s\n' 'Usage: ./play-team "Build and launch the first working space platform"' >&2
+    printf '%s\n' 'Usage: ./play-team [--background] "Build and launch the first working space platform"' >&2
     exit 2
 fi
 
 cd "$(dirname "$0")"
-if [ ! -x .build/release/factorio-player ]; then
+if [ "$background" = true ]; then
+    mcp_command="$PWD/background-game"
+elif [ -x .build/release/factorio-player ]; then
+    mcp_command="$PWD/.build/release/factorio-player"
+else
     printf '%s\n' 'Build the player first with swift build -c release.' >&2
     exit 1
 fi
@@ -21,7 +30,7 @@ the planner and continue until the operator objective is visibly achieved or the
 reports a blocker that needs the operator. Follow docs/playbook.md and preserve achievements.'
 
 exec codex \
-    -c "mcp_servers.factorio_player.command=$PWD/.build/release/factorio-player" \
+    -c "mcp_servers.factorio_player.command=$mcp_command" \
     -c 'mcp_servers.factorio_player.args=["mcp","--allow-input"]' \
     "$instructions
 
