@@ -53,7 +53,7 @@ The first start builds the Docker image. Check the logs for `Factorio initialise
 ## 3. Run the two agents
 
 ```sh
-./play-team --background "Continue the loaded Nauvis save until the first working space platform"
+./play-team "Continue the loaded Nauvis save until the first working space platform"
 ```
 
 The launcher configures the Factorio MCP connection for that Codex session. The planner issues one milestone at a time. The player verifies each result in the game before reporting back. Keep the Codex session running while they play. If you connect over SSH, start the session inside a terminal multiplexer to keep it running across disconnects. [Codex custom agents](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agents)
@@ -70,7 +70,7 @@ To resume, start without passing the original ZIP again. The private profile sti
 
 ```sh
 ./background-game start "$HOME/games/factorio"
-./play-team --background "Load my saved Nauvis game and continue building the space platform"
+./play-team "Load my saved Nauvis game and continue building the space platform"
 ```
 
 The container runs the standalone client and uses regular game inputs. The save retains its normal achievement eligibility. Steam unlocks during the standalone session are unverified. [Factorio achievement rules](https://wiki.factorio.com/Achievements#Disabling_achievements)

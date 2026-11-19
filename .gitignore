@@ -1,5 +1,3 @@
-.build/
-.swiftpm/
 .DS_Store
 
 .factorio-background/
