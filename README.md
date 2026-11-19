@@ -1,10 +1,40 @@
-# Factorio Autoplayer for macOS
+# Factorio Autoplayer
 
-Use a vision-capable MCP agent to play an ordinary Factorio or Space Age save on a Mac. The player observes the Factorio window, then uses native foreground mouse and keyboard events. Factorio handles placement, inventory, crafting, research, combat and time. The player uses no mods, RCON, Lua commands, or save edits.
+Use a vision-capable MCP agent to play an ordinary Factorio or Space Age save. The background launcher runs Factorio on a private Linux display. The native macOS launcher drives the foreground Factorio window. Both use screenshots and normal keyboard and mouse input for placement, inventory, crafting, research and combat.
 
 Normal input leaves an otherwise eligible save eligible for Steam achievements. Factorio's usual achievement conditions still apply. See [Factorio's achievement rules](https://wiki.factorio.com/Achievements#Disabling_achievements).
 
-## Build and connect
+## Run on an x86-64 Linux computer
+
+Run these steps on the Linux computer. Install Git, [Docker Engine with Buildx](https://docs.docker.com/engine/install/), and the [Codex CLI](https://learn.chatgpt.com/docs/codex/cli). Sign in to Codex on that machine. The same user who launches Codex needs access to the running local Docker daemon. The container supplies its own display and software graphics, so the Linux host can run without a monitor or desktop session.
+
+```sh
+uname -m       # Expected: x86_64
+docker version # Check that both Client and Server are listed
+docker buildx version
+codex --version
+git clone https://github.com/temidaradev/factorio-autoplayer.git
+cd factorio-autoplayer
+```
+
+Download the licensed **full Factorio: Space Age Linux x64** archive. Choose a version that can open your save. Copy your Nauvis save ZIP to the Linux computer, for example into `~/Downloads`. Extract the game archive and start the background client. Replace the filenames below with yours. The extracted directory should contain `bin/x64/factorio` and `data/`. [Factorio downloads](https://www.factorio.com/download)
+
+```sh
+mkdir -p "$HOME/games"
+tar -xf "$HOME/Downloads/factorio-space-age_linux_2.1.24.tar.xz" -C "$HOME/games"
+./background-game start "$HOME/games/factorio" "$HOME/Downloads/Nauvis.zip"
+./background-game logs
+```
+
+Once the log shows `Factorio initialised`, launch the planner and player in the same repository. Keep the Codex session running while they play. The CLI connects to the background client on that Linux computer.
+
+```sh
+./play-team --background "Continue the loaded Nauvis save until the first working space platform"
+```
+
+On first import, the launcher copies the ZIP to `.factorio-background/saves/start.zip` and opens the copy. To start fresh or resume a previously saved background game, omit the ZIP and have the player use Factorio's **New game** or **Load game** menu. Ask the player to save in-game before running `./background-game stop`. The saved ZIP remains in `.factorio-background/saves/` and can be copied back to the Mac. This setup runs the standalone client. Save eligibility is preserved through normal play, while Steam unlocks during the standalone session are unverified. [Factorio achievement rules](https://wiki.factorio.com/Achievements)
+
+## Build the native macOS player
 
 Requires macOS 14 or newer and the Swift 5.9+ toolchain. Run from this repository:
 
@@ -16,7 +46,7 @@ swift build -c release
 
 The diagnostic reports whether Factorio is running and whether the process has Screen Recording and Accessibility access. The program checks these permissions without requesting or modifying them. Screen Recording is needed for screenshots. Accessibility is needed to deliver foreground input.
 
-## Play with two agents
+## Play with two agents on macOS
 
 Launch Factorio and open the intended save. Then start a Codex CLI session with the project launcher:
 
@@ -39,7 +69,7 @@ Omit the save argument to start at the game menu or resume a save already in the
 
 This runs the standalone Linux client. It uses normal game input and leaves save eligibility intact. Steam unlocks aren't verified in standalone mode. The background profile keeps its own config and saves, and the native Mac game can remain closed. [Factorio achievement rules](https://wiki.factorio.com/Achievements)
 
-## Connect another MCP session
+## Connect another native macOS MCP session
 
 In your MCP client's local configuration, use the absolute path of the built executable. For a Codex CLI installation, from this repository run:
 
@@ -74,7 +104,7 @@ Example arguments for `factorio_act`, using a fresh frame ID and a location obse
 
 Use `key` with a duration for movement, including diagonals like `w+d`. Use `move`, `click`, `drag` and `scroll` for the pointer. Drag takes `at` and `to`. Scroll takes signed `ticks`, positive for up. Click and drag support `shift` and `control`. The `text` action is for short recipe searches and save names. It uses US ANSI key positions, so a different keyboard layout can produce different characters.
 
-A batch accepts up to 12 actions with a timing budget of roughly four seconds. The player checks that the visible Factorio window still matches the frame, that the game owns foreground focus and that pointer targets are visible. A batch consumes its frame ID. Observe again to verify the game result before sending another batch. Failed or partly executed batches report how far they got. An action that stopped mid-hold may still have affected the game.
+A batch accepts up to 12 actions with a timing budget of roughly four seconds. In background mode, focus is checked on the private display. In native macOS mode, focus and pointer visibility are checked on the Mac. A batch consumes its frame ID. Observe again to verify the game result before sending another batch. Failed or partly executed batches report how far they got. An action that stopped mid-hold may still have affected the game.
 
 For a read-only picture outside MCP, run `.build/release/factorio-player snapshot /absolute/path/to/new-frame.png`.
 
